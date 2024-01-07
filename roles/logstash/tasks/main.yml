@@ -1,0 +1,48 @@
+---
+# tasks file for logstash
+- name: Install apt package requirements
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - gpg-agent
+    - curl
+    - procps
+    - net-tools
+    - gnupg
+
+
+
+
+- name: Install Logstash
+  block:
+    - name: Logstash-install | Import Logstash GPG Key
+      ansible.builtin.shell: "curl -fsSL https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg"
+    - name: Add Logstash APT Repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main"
+        state: present
+        filename: "elastic-8.x.list"
+    - name: Install Logstash package
+      ansible.builtin.apt:
+        name: logstash
+        state: present
+
+
+
+- name: update host entry
+  ansible.builtin.shell: |
+    echo "{{elastic_ip}} {{elastic_domain}}" | tee -a /etc/hosts    
+
+- name: Clean and replace filebeat.yml # To elevate privileges to modify system files
+  ansible.builtin.template:
+    src: syslog.conf.j2 # Path to your template file
+    dest: /etc/logstash/conf.d/syslog.conf
+
+
+
+- name: Enable and start Elasticsearch service
+  service:
+    name: logstash
+    state: restarted

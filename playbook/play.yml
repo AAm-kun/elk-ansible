@@ -1,0 +1,30 @@
+---
+- hosts: elasticsearch
+  pre_tasks:
+  - name: include env vars
+    include_vars: "{{ inventory_dir }}/vars.yml"
+  roles:
+    - roles/elasticsearch
+
+
+- hosts: kibana  
+  pre_tasks:
+  - name: include env vars
+    include_vars: "{{ inventory_dir }}/vars.yml"
+  roles:
+    - roles/kibana
+
+- hosts: filebeat
+  pre_tasks:
+  - name: include env vars
+    include_vars: "{{ inventory_dir }}/vars.yml"
+  roles:
+    - roles/filebeat
+  
+- hosts: logstash
+  pre_tasks:
+  - name: include env vars
+    include_vars: "{{ inventory_dir }}/vars.yml"
+  roles:
+    - roles/logstash
+        

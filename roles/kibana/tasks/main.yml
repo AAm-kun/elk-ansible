@@ -1,0 +1,54 @@
+---
+# tasks file for kibana
+
+
+
+
+
+- name: Install apt package requirements
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - gpg-agent
+    - curl
+    - procps
+    - net-tools
+    - gnupg
+
+- name: Install kibana
+  block:
+    - name: Import kibana GPG Key
+      ansible.builtin.shell: "curl -fsSL https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg"
+    - name: Add kibana APT Repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main"
+        state: present
+        filename: "elastic-8.x.list"
+    - name: Install kibana package
+      ansible.builtin.apt:
+        name: kibana
+        state: present
+
+
+
+- name: update host entry
+  ansible.builtin.shell: echo "{{elastic_ip}} {{elastic_domain}}" | tee -a /etc/hosts
+
+- name: update config of kibana
+  ansible.builtin.shell: |
+    echo 'server.port: 5601' | tee -a /etc/kibana/kibana.yml
+    echo 'server.host: "0.0.0.0"' | tee -a /etc/kibana/kibana.yml
+    echo 'elasticsearch.hosts: ["https://{{elastic_domain}}:9200"]' | tee -a /etc/kibana/kibana.yml
+    echo 'elasticsearch.username: "kibana"' | tee -a /etc/kibana/kibana.yml
+    echo 'elasticsearch.ssl.verificationMode: none' | tee -a /etc/kibana/kibana.yml
+    echo 'elasticsearch.password: {{kibana_pass}}' | tee -a /etc/kibana/kibana.yml
+
+
+
+
+- name: Enable and start kibana service
+  service:
+    name: kibana
+    state: restarted    

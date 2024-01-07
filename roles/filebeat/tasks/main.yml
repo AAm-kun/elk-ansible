@@ -1,0 +1,61 @@
+---
+# tasks file for filebeat
+
+- name: Install apt package requirements
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - gpg-agent
+    - curl
+    - procps
+    - net-tools
+    - gnupg
+
+
+
+
+- name: Install Elasticsearch
+  block:
+    - name: elasticsearch-install | Import Elasticsearch GPG Key
+      ansible.builtin.shell: "curl -fsSL https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg"
+    - name: Add Elasticsearch APT Repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main"
+        state: present
+        filename: "elastic-8.x.list"
+    - name: Install Elasticsearch package
+      ansible.builtin.apt:
+        name: filebeat
+        state: present
+
+
+
+- name: Clean and replace filebeat.yml # To elevate privileges to modify system files
+  ansible.builtin.template:
+    src: filebeat.yml.j2  # Path to your template file
+    dest: /etc/filebeat/filebeat.yml  
+
+
+
+- name: update host entry
+  ansible.builtin.shell: |
+    echo "{{elastic_ip}} {{elastic_domain}}" | tee -a /etc/hosts    
+    echo "{{kibana_ip}} {{kibana_domain}}" | tee -a /etc/hosts   
+
+
+- name: kibana Dashboard setup
+  ansible.builtin.shell: |
+    filebeat setup -e --dashboards
+
+- name: Clean and replace netlfow.yml 
+  ansible.builtin.template:
+    src: netflow.yml.j2  # Path to your template file
+    dest: /etc/filebeat/modules.d/netflow.yml
+
+
+- name: Enable and start Elasticsearch service
+  service:
+    name: filebeat
+    state: restarted

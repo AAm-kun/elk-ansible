@@ -1,0 +1,65 @@
+---
+
+# tasks file for elasticsearch
+
+
+
+- name: Install apt package requirements
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - gpg-agent
+    - curl
+    - procps
+    - net-tools
+    - gnupg
+
+
+
+
+- name: Install Elasticsearch
+  block:
+    - name: elasticsearch-install | Import Elasticsearch GPG Key
+      ansible.builtin.shell: "curl -fsSL https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg"
+    - name: Add Elasticsearch APT Repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main"
+        state: present
+        filename: "elastic-8.x.list"
+    - name: Install Elasticsearch package
+      ansible.builtin.apt:
+        name: elasticsearch
+        state: present
+
+
+- name: Update JVM & Network Listen
+  ansible.builtin.shell: |
+    sed -i -e 's/^## -Xms.*/-Xms4g/' -e 's/^## -Xmx.*/-Xmx4g/' /etc/elasticsearch/jvm.options
+    sed -i -e 's/^#network.host: 192.168.0.1/network.host: 0.0.0.0/' /etc/elasticsearch/elasticsearch.yml
+  
+
+
+
+- name: Enable and start Elasticsearch service
+  service:
+    name: elasticsearch
+    state: started
+    enabled: yes
+
+
+- name: Reset Elasticsearch password for 'elastic' user
+  shell: |
+    printf "{{ elastic_pass }}\n{{ elastic_pass }}" | /usr/share/elasticsearch/bin/elasticsearch-reset-password -b -i -u elastic 
+
+- name: Reset Elasticsearch password for 'kibana' user
+  shell: |
+    printf "{{ kibana_pass }}\n{{ kibana_pass }}" | /usr/share/elasticsearch/bin/elasticsearch-reset-password -b -i -u kibana 
+
+
+- name: Enable and start Elasticsearch service
+  service:
+    name: elasticsearch
+    state: restarted
+
