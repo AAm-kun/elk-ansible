@@ -1,6 +1,6 @@
 ---
 
-# tasks file for elasticsearch
+#tasks file for elasticsearch
 
 
 
@@ -15,6 +15,7 @@
     - procps
     - net-tools
     - gnupg
+    - unzip
 
 
 
@@ -34,12 +35,57 @@
         state: present
 
 
-- name: Update JVM & Network Listen
-  ansible.builtin.shell: |
-    sed -i -e 's/^## -Xms.*/-Xms4g/' -e 's/^## -Xmx.*/-Xmx4g/' /etc/elasticsearch/jvm.options
-    sed -i -e 's/^#network.host: 192.168.0.1/network.host: 0.0.0.0/' /etc/elasticsearch/elasticsearch.yml
-  
+- name: update host entry
+  ansible.builtin.shell: echo "{{elastic_ip}} {{elastic_domain}}" | tee -a /etc/hosts
 
+- name: Update JVM 
+  ansible.builtin.shell: |
+    sed -i -e 's/^## -Xms.*/-Xms{{xms}}/' -e 's/^## -Xmx.*/-Xmx{{xmx}}/' /etc/elasticsearch/jvm.options
+
+
+- name: Clean and replace kibana.yml 
+  ansible.builtin.template:
+    src: elasticsearch.yml.j2  # Path to your template file
+    dest: /etc/elasticsearch/elasticsearch.yml
+
+- name: CA generation for elasticsearch & kibana
+  ansible.builtin.shell: |
+    /usr/share/elasticsearch/bin/elasticsearch-certutil ca --pem --out /etc/elasticsearch/certs/ca.zip
+    unzip /etc/elasticsearch/certs/ca.zip -d /etc/elasticsearch/certs/
+
+
+
+
+- name:  Certificate generation for elasticsearch 
+  ansible.builtin.shell: |
+    /usr/share/elasticsearch/bin/elasticsearch-certutil cert \
+      --out /etc/elasticsearch/certs/elastic.zip \
+      --name elastic \
+      --ca-cert /etc/elasticsearch/certs/ca/ca.crt \
+      --ca-key /etc/elasticsearch/certs/ca/ca.key \
+      --dns {{elastic_domain}} \
+      --ip {{elastic_ip}} \ 
+      --pem;
+
+- name: Certificate extract for Elasticsearch
+  ansible.builtin.shell: unzip /etc/elasticsearch/certs/elastic.zip -d /etc/elasticsearch/certs/
+
+
+- name:  Certificate generation for kibana 
+  ansible.builtin.shell: |
+    /usr/share/elasticsearch/bin/elasticsearch-certutil cert \
+      --out /etc/elasticsearch/certs/kibana.zip \
+      --name elastic \
+      --ca-cert /etc/elasticsearch/certs/ca/ca.crt \
+      --ca-key /etc/elasticsearch/certs/ca/ca.key \
+      --dns {{kibana_domain}} \
+      --ip {{kibana_ip}} \
+      --pem;
+
+
+- name:  Certificate certificate file permission fix
+  ansible.builtin.shell: |
+    chown -R elasticsearch:elasticsearch /etc/elasticsearch/certs
 
 
 - name: Enable and start Elasticsearch service
@@ -56,6 +102,15 @@
 - name: Reset Elasticsearch password for 'kibana' user
   shell: |
     printf "{{ kibana_pass }}\n{{ kibana_pass }}" | /usr/share/elasticsearch/bin/elasticsearch-reset-password -b -i -u kibana 
+
+
+- name: ansible copy file from remote to local.
+  fetch:
+    src: /etc/elasticsearch/certs/kibana.zip
+    dest: ../templates/kibana.zip
+    flat: yes
+
+
 
 
 - name: Enable and start Elasticsearch service

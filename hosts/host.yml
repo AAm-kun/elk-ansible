@@ -1,20 +1,24 @@
 all:
   hosts:
     elasticsearch:
-      ansible_host: 192.168.103.227
+      ansible_host: 192.168.103.121
       ansible_user: root
+      ansible_password: test@123
 
     kibana:
-      ansible_host: 192.168.103.229
+      ansible_host: 192.168.103.122
       ansible_user: root
+      ansible_password: test@123
 
     filebeat:
-      ansible_host: 192.168.103.230
+      ansible_host: 192.168.103.123
       ansible_user: root
+      ansible_password: test@123
    
       
     logstash:
       ansible_host: 192.168.103.232
       ansible_user: root
+      ansible_password: test@123
 
         

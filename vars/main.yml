@@ -1,7 +1,9 @@
-elastic_ip: 192.168.103.227
-kibana_ip: 192.168.103.229
+elastic_ip: 192.168.103.121
+kibana_ip: 192.168.103.122
 elastic_domain: "elastic.com"
 elastic_pass: "changeme@2"
 kibana_domain: "abc.com"
 kibana_pass: "changeme"
 netlfow_port: 2055
+xmx: 4g
+xms: 4g
