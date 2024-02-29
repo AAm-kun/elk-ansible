@@ -7,19 +7,19 @@
 
 
 
-# - hosts: kibana  
-#   roles:
-#     - roles/kibana
-#   vars_files:
-#     - ../vars/main.yml
+- hosts: kibana  
+  roles:
+    - roles/kibana
+  vars_files:
+    - ../vars/main.yml
   
 
-# - hosts: filebeat
-#   pre_tasks:
-#   - name: include env vars
-#     include_vars: "{{ inventory_dir }}/vars.yml"
-#   roles:
-#     - roles/filebeat
+- hosts: filebeat
+  roles:
+    - roles/filebeat
+  vars_files:
+    - ../vars/main.yml
+      
   
 # - hosts: logstash
 #   pre_tasks:

@@ -75,7 +75,7 @@
   ansible.builtin.shell: |
     /usr/share/elasticsearch/bin/elasticsearch-certutil cert \
       --out /etc/elasticsearch/certs/kibana.zip \
-      --name elastic \
+      --name kibana \
       --ca-cert /etc/elasticsearch/certs/ca/ca.crt \
       --ca-key /etc/elasticsearch/certs/ca/ca.key \
       --dns {{kibana_domain}} \
@@ -83,7 +83,7 @@
       --pem;
 
 
-- name:  Certificate certificate file permission fix
+- name:  Certificate file permission fix
   ansible.builtin.shell: |
     chown -R elasticsearch:elasticsearch /etc/elasticsearch/certs
 
@@ -104,11 +104,19 @@
     printf "{{ kibana_pass }}\n{{ kibana_pass }}" | /usr/share/elasticsearch/bin/elasticsearch-reset-password -b -i -u kibana 
 
 
-- name: ansible copy file from remote to local.
+
+- name: Kibana cert copy file from remote to local.
   fetch:
     src: /etc/elasticsearch/certs/kibana.zip
     dest: ../templates/kibana.zip
     flat: yes
+
+- name: CA copy file from remote to local.
+  fetch:
+    src: /etc/elasticsearch/certs/ca/ca.crt
+    dest: ../templates/elastic_ca.crt
+    flat: yes
+
 
 
 

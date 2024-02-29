@@ -44,6 +44,15 @@
     echo "{{elastic_ip}} {{elastic_domain}}" | tee -a /etc/hosts    
     echo "{{kibana_ip}} {{kibana_domain}}" | tee -a /etc/hosts   
 
+- name: ansible copy file from remote to local.
+  copy:
+    src: ../templates/elastic_ca.crt
+    dest: /etc/filebeat/elastic_ca.crt
+
+- name: Pause for 3 minutes to start kibana
+  ansible.builtin.pause:
+    minutes: 3
+
 
 - name: kibana Dashboard setup
   ansible.builtin.shell: |
@@ -55,7 +64,7 @@
     dest: /etc/filebeat/modules.d/netflow.yml
 
 
-- name: Enable and start Elasticsearch service
+- name: Enable and start filebeat service
   service:
     name: filebeat
     state: restarted
