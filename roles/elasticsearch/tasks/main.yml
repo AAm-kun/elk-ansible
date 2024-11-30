@@ -97,11 +97,13 @@
 
 - name: Reset Elasticsearch password for 'elastic' user
   shell: |
-    printf "{{ elastic_pass }}\n{{ elastic_pass }}" | /usr/share/elasticsearch/bin/elasticsearch-reset-password -b -i -u elastic 
+    printf "{{ elastic_pass }}\n{{ elastic_pass }}" | /usr/share/elasticsearch/bin/elasticsearch-reset-password -b -i -u elastic --url https://{{elastic_domain}}:9200
+
 
 - name: Reset Elasticsearch password for 'kibana' user
   shell: |
-    printf "{{ kibana_pass }}\n{{ kibana_pass }}" | /usr/share/elasticsearch/bin/elasticsearch-reset-password -b -i -u kibana 
+    printf "{{ kibana_pass }}\n{{ kibana_pass }}" | /usr/share/elasticsearch/bin/elasticsearch-reset-password -b -i -u kibana --url https://{{elastic_domain}}:9200
+
 
 
 
