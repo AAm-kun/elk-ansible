@@ -108,8 +108,8 @@ xpack.security.transport.ssl:
   truststore.path: certs/transport.p12
 # Create a new cluster with the current node only
 # Additional nodes can still join the cluster later
-cluster.initial_master_nodes: ["elasticsearch"]
-
+#cluster.initial_master_nodes: ["elasticsearch"]
+discovery.type: single-node
 # Allow HTTP API connections from anywhere
 # Connections are encrypted and require user authentication
 http.host: 0.0.0.0
